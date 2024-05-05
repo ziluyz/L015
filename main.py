@@ -17,6 +17,8 @@ pygame.display.set_icon(icon)
 
 # Цвета
 red = (255, 0, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
 black = (0, 0, 0)
 white = (255, 255, 255)
 
@@ -27,6 +29,9 @@ time_bar_height = 40
 # Шрифт и размер текста
 font = pygame.font.SysFont('Comic Sans MS', 32)
 
+# Параметры табло подсчёта очков
+score_bar_y = SCREEN_HEIGHT - 50
+
 # Параметры целей
 target_img_1 = pygame.image.load("Img/pig.png")
 target_img_2 = pygame.image.load("Img/pig_2.png")
@@ -34,10 +39,11 @@ target_img_3 = pygame.image.load("Img/pig_3.png")
 targets = [(target_img_1, 80, 80), (target_img_2, 80, 110), (target_img_3, 80, 89)]
 
 def random_target():
-    global target_img, target_width, target_height, target_x, target_y, target_delay
-    target_img, target_width, target_height = random.choice(targets)
+    global target_index,target_img, target_width, target_height, target_x, target_y, target_delay
+    target_index = random.randint(0, 2)
+    target_img, target_width, target_height = targets[target_index]
     target_x = random.randint(0, SCREEN_WIDTH - target_width)
-    target_y = random.randint(time_bar_y + time_bar_height, SCREEN_HEIGHT - target_height)
+    target_y = random.randint(time_bar_y + time_bar_height, score_bar_y - target_height)
     target_delay = random.randint(10, 20)
 
 random_target()
@@ -48,6 +54,7 @@ start_ticks = pygame.time.get_ticks()  # стартовое время
 
 # Основной цикл приложения
 running = True
+score = 0
 while running:
     target_delay -= 1
     if target_delay <= 0:
@@ -58,7 +65,11 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if target_x < event.pos[0] < target_x + target_width and target_y < event.pos[1] < target_y + target_height:
-                pass
+                if target_index == 2:
+                    score += 10
+                else:
+                    score -= 20
+                random_target()
     
      # Текущее время
     ticks = pygame.time.get_ticks()
@@ -85,6 +96,10 @@ while running:
     # Отрисовка текста с оставшимся временем
     text = font.render(f"{remaining_seconds}", True, red)
     screen.blit(text, (SCREEN_WIDTH - 50, 5))
+
+     # Отрисовка текста с очками
+    text = font.render(f"{score}", True, green if score >= 0 else blue)
+    screen.blit(text, (SCREEN_WIDTH // 2, score_bar_y))
 
     # Обновление экрана
     pygame.display.flip()
