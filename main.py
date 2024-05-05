@@ -9,24 +9,38 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+# Оформление приложения
+
 pygame.display.set_caption("Игра Тир")
 icon = pygame.image.load("Img/icon.png")
 pygame.display.set_icon(icon)
-
-# Параметры цели
-target_img = pygame.image.load("Img/pig.png")
-target_width = 80
-target_height = 80
-target_x = random.randint(0, SCREEN_WIDTH - target_width)
-target_y = random.randint(0, SCREEN_HEIGHT - target_height)
 
 # Цвета
 red = (255, 0, 0)
 black = (0, 0, 0)
 white = (255, 255, 255)
 
+# Параметры шкалы времени
+time_bar_y = 10
+time_bar_height = 40
+
 # Шрифт и размер текста
-font = pygame.font.Font(None, 36)
+font = pygame.font.SysFont('Comic Sans MS', 32)
+
+# Параметры целей
+target_img_1 = pygame.image.load("Img/pig.png")
+target_img_2 = pygame.image.load("Img/pig_2.png")
+target_img_3 = pygame.image.load("Img/pig_3.png")
+targets = [(target_img_1, 80, 80), (target_img_2, 80, 110), (target_img_3, 80, 89)]
+
+def random_target():
+    global target_img, target_width, target_height, target_x, target_y, target_delay
+    target_img, target_width, target_height = random.choice(targets)
+    target_x = random.randint(0, SCREEN_WIDTH - target_width)
+    target_y = random.randint(time_bar_y + time_bar_height, SCREEN_HEIGHT - target_height)
+    target_delay = random.randint(10, 20)
+
+random_target()
 
 # Начальные настройки таймера
 total_time = 600  # 1 минута = 600 сантисекунд
@@ -35,23 +49,26 @@ start_ticks = pygame.time.get_ticks()  # стартовое время
 # Основной цикл приложения
 running = True
 while running:
+    target_delay -= 1
+    if target_delay <= 0:
+        random_target()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if target_x < event.pos[0] < target_x + target_width and target_y < event.pos[1] < target_y + target_height:
-                target_x = random.randint(0, SCREEN_WIDTH - target_width)
-                target_y = random.randint(0, SCREEN_HEIGHT - target_height)
+                pass
     
      # Текущее время
     ticks = pygame.time.get_ticks()
-    seconds = (ticks - start_ticks) // 100  # количество прошедших сантисекунд
+    s_seconds = (ticks - start_ticks) // 100  # количество прошедших сантисекунд
 
-    if seconds > total_time:
+    if s_seconds > total_time:
         running = False
 
     # Расчет оставшегося времени
-    remaining_s_seconds = total_time - seconds
+    remaining_s_seconds = total_time - s_seconds
     remaining_seconds = remaining_s_seconds // 10 + 1
 
     # Отрисовка фона
@@ -62,11 +79,11 @@ while running:
 
     # Отрисовка шкалы времени
     time_bar_length = (remaining_s_seconds / total_time) * (SCREEN_WIDTH - 70)
-    time_bar = pygame.Rect(10, 10, time_bar_length, 20)
+    time_bar = pygame.Rect(10, time_bar_y, time_bar_length, time_bar_height)
     pygame.draw.rect(screen, red, time_bar)
 
     # Отрисовка текста с оставшимся временем
-    text = font.render(f"{remaining_seconds}", True, white)
+    text = font.render(f"{remaining_seconds}", True, red)
     screen.blit(text, (SCREEN_WIDTH - 50, 5))
 
     # Обновление экрана
