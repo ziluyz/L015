@@ -1,6 +1,6 @@
 import pygame
 import random
-import sys
+import pygame.locals as pl
 
 pygame.init()
 
@@ -45,13 +45,41 @@ target_img_2 = pygame.image.load("Img/pig_2.png")
 target_img_3 = pygame.image.load("Img/pig_3.png")
 targets = [(target_img_1, 80, 80), (target_img_2, 80, 110), (target_img_3, 80, 89)]
 
+# Загружаем изображение для курсора
+cursor_image = pygame.image.load('Img/cursor.png')
+cursor_image = pygame.transform.scale(cursor_image, (64, 64))
+cur_width, cur_height = cursor_image.get_size()
+
+# Преобразование маски в строки для compile
+cursor_strings = []
+for y in range(cur_height):
+    row = ''
+    for x in range(cur_width):
+        if cursor_image.get_at((x, y))[3] > 100:
+            row += 'X'  # Белый пиксель
+        else:
+            row += ' '  # Прозрачный пиксель
+    cursor_strings.append(row)
+
+# Компилируем строки в данные для курсора
+compiled_cursor = pygame.cursors.compile(cursor_strings, white='X', black='.')
+
+# Установка курсора
+pygame.mouse.set_cursor((cur_width, cur_height), (cur_width // 2, cur_height // 2), compiled_cursor[0], compiled_cursor[1])
+
+# Выстрелы
+bullet_hole = pygame.image.load("Img/bullethole.png")
+bullet_width = 60
+bullet_height = 60
+bullet_hole = pygame.transform.scale(bullet_hole, (bullet_width, bullet_height))
+
 def random_target():
     global target_index,target_img, target_width, target_height, target_x, target_y, target_delay
     target_index = random.randint(0, 2)
     target_img, target_width, target_height = targets[target_index]
-    target_x = random.randint(0, SCREEN_WIDTH - target_width)
-    target_y = random.randint(time_bar_y + time_bar_height, SCREEN_HEIGHT - target_height)
-    target_delay = random.randint(10, 20)
+    target_x = random.randint(10, SCREEN_WIDTH - target_width-10)
+    target_y = random.randint(time_bar_y + time_bar_height+10, SCREEN_HEIGHT - target_height-10)
+    target_delay = random.randint(5, 10)
 
 random_target()
 
@@ -63,6 +91,12 @@ start_ticks = pygame.time.get_ticks()  # стартовое время
 running = True
 score = 0
 while running:
+    # Отрисовка фона
+    screen.fill(black)
+    
+    # Отрисовка цели
+    screen.blit(target_img, (target_x, target_y))
+
     target_delay -= 1
     if target_delay <= 0:
         random_target()
@@ -71,6 +105,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
+            screen.blit(bullet_hole, (event.pos[0]-bullet_width//2, event.pos[1] - bullet_height//2))
             if target_x < event.pos[0] < target_x + target_width and target_y < event.pos[1] < target_y + target_height:
                 if target_index == 2:
                     score += 10
@@ -88,12 +123,6 @@ while running:
     # Расчет оставшегося времени
     remaining_s_seconds = total_time - s_seconds
     remaining_seconds = remaining_s_seconds // 10 + 1
-
-    # Отрисовка фона
-    screen.fill(black)
-    
-    # Отрисовка цели
-    screen.blit(target_img, (target_x, target_y))
 
     # Отрисовка шкалы времени
     screen.blit(text_time, (time_text_x, 5))
