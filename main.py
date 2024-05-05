@@ -22,15 +22,22 @@ blue = (0, 0, 255)
 black = (0, 0, 0)
 white = (255, 255, 255)
 
-# Параметры шкалы времени
-time_bar_y = 10
-time_bar_height = 40
-
 # Шрифт и размер текста
 font = pygame.font.SysFont('Comic Sans MS', 32)
 
+# Параметры шкалы времени
+text_time = font.render(f"Time:", True, white)
+time_text_x = 10
+time_bar_x = time_text_x + text_time.get_width() + 10
+time_bar_y = 10
+time_bar_width = SCREEN_WIDTH - 280 - text_time.get_width() - 10
+time_bar_height = 40
+time_x = time_bar_x + time_bar_width + 20
+
 # Параметры табло подсчёта очков
-score_bar_y = SCREEN_HEIGHT - 50
+score_text_x = SCREEN_WIDTH - 190
+text_score = font.render(f"Score:", True, white)
+score_x = score_text_x + text_score.get_width() + 10
 
 # Параметры целей
 target_img_1 = pygame.image.load("Img/pig.png")
@@ -43,7 +50,7 @@ def random_target():
     target_index = random.randint(0, 2)
     target_img, target_width, target_height = targets[target_index]
     target_x = random.randint(0, SCREEN_WIDTH - target_width)
-    target_y = random.randint(time_bar_y + time_bar_height, score_bar_y - target_height)
+    target_y = random.randint(time_bar_y + time_bar_height, SCREEN_HEIGHT - target_height)
     target_delay = random.randint(10, 20)
 
 random_target()
@@ -89,17 +96,25 @@ while running:
     screen.blit(target_img, (target_x, target_y))
 
     # Отрисовка шкалы времени
-    time_bar_length = (remaining_s_seconds / total_time) * (SCREEN_WIDTH - 70)
-    time_bar = pygame.Rect(10, time_bar_y, time_bar_length, time_bar_height)
+    screen.blit(text_time, (time_text_x, 5))
+    time_bar_length = (remaining_s_seconds / total_time) * time_bar_width
+    if time_bar_length < 10:
+        time_bar_length = 10
+    time_bar = pygame.Rect(time_bar_x, time_bar_y, time_bar_width, time_bar_height)
+    pygame.draw.rect(screen, red, time_bar)
+    time_bar = pygame.Rect(time_bar_x + 3, time_bar_y + 3, time_bar_width - 6, time_bar_height - 6)
+    pygame.draw.rect(screen, black, time_bar)
+    time_bar = pygame.Rect(time_bar_x + 5, time_bar_y + 5, time_bar_length - 10, time_bar_height - 10)
     pygame.draw.rect(screen, red, time_bar)
 
     # Отрисовка текста с оставшимся временем
     text = font.render(f"{remaining_seconds}", True, red)
-    screen.blit(text, (SCREEN_WIDTH - 50, 5))
+    screen.blit(text, (time_x, 5))
 
      # Отрисовка текста с очками
     text = font.render(f"{score}", True, green if score >= 0 else blue)
-    screen.blit(text, (SCREEN_WIDTH // 2, score_bar_y))
+    screen.blit(text_score, (score_text_x, 5))
+    screen.blit(text, (score_x, 5))
 
     # Обновление экрана
     pygame.display.flip()
