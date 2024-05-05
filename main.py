@@ -43,7 +43,7 @@ score_x = score_text_x + text_score.get_width() + 10
 target_img_1 = pygame.image.load("Img/pig.png")
 target_img_2 = pygame.image.load("Img/pig_2.png")
 target_img_3 = pygame.image.load("Img/pig_3.png")
-targets = [(target_img_1, 80, 80), (target_img_2, 80, 110), (target_img_3, 80, 89)]
+possible_targets = [(target_img_1, 80, 80), (target_img_2, 80, 110), (target_img_3, 80, 89)]
 
 # Загружаем изображение для курсора
 cursor_image = pygame.image.load('Img/cursor.png')
@@ -73,15 +73,20 @@ bullet_width = 60
 bullet_height = 60
 bullet_hole = pygame.transform.scale(bullet_hole, (bullet_width, bullet_height))
 
-def random_target():
-    global target_index,target_img, target_width, target_height, target_x, target_y, target_delay
-    target_index = random.randint(0, 2)
-    target_img, target_width, target_height = targets[target_index]
-    target_x = random.randint(10, SCREEN_WIDTH - target_width-10)
-    target_y = random.randint(time_bar_y + time_bar_height+10, SCREEN_HEIGHT - target_height-10)
-    target_delay = random.randint(5, 10)
+class Target:
+    def __init__(self):
+        self.randomize()
 
-random_target()
+    def randomize(self):
+        self.shown = random.randint(0, 1)
+        self.delay = random.randint(5, 10)
+        if self.shown == 1:
+            self.index = random.randint(0, 2)
+            self.img, self.width, self.height = possible_targets[self.index]
+            self.x = random.randint(10, SCREEN_WIDTH - self.width - 10)
+            self.y = random.randint(time_bar_y + time_bar_height + 10, SCREEN_HEIGHT - self.height - 10)
+
+target = Target()
 
 # Начальные настройки таймера
 total_time = 600  # 1 минута = 600 сантисекунд
@@ -95,23 +100,23 @@ while running:
     screen.fill(black)
     
     # Отрисовка цели
-    screen.blit(target_img, (target_x, target_y))
+    if target.shown == 1: screen.blit(target.img, (target.x, target.y))
 
-    target_delay -= 1
-    if target_delay <= 0:
-        random_target()
+    target.delay -= 1
+    if target.delay <= 0:
+        target.randomize()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            screen.blit(bullet_hole, (event.pos[0]-bullet_width//2, event.pos[1] - bullet_height//2))
-            if target_x < event.pos[0] < target_x + target_width and target_y < event.pos[1] < target_y + target_height:
-                if target_index == 2:
-                    score += 10
-                else:
-                    score -= 20
-                random_target()
+            if target.shown == 1:
+                if target.x < event.pos[0] < target.x + target.width and target.y < event.pos[1] < target.y + target.height:
+                    if target.index == 2:
+                        score += 10
+                    else:
+                        score -= 20
+                    target.randomize()
     
      # Текущее время
     ticks = pygame.time.get_ticks()
