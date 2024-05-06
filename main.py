@@ -79,14 +79,22 @@ class Target:
 
     def randomize(self):
         self.shown = random.randint(0, 1)
-        self.delay = random.randint(5, 10)
+        self.delay = random.randint(10, 20)
         if self.shown == 1:
             self.index = random.randint(0, 2)
             self.img, self.width, self.height = possible_targets[self.index]
             self.x = random.randint(10, SCREEN_WIDTH - self.width - 10)
             self.y = random.randint(time_bar_y + time_bar_height + 10, SCREEN_HEIGHT - self.height - 10)
+            for target in targets:
+                if target == self or target.shown == 0:
+                    continue
+                if (self.x < target.x + target.width + 10 and self.x + self.width > target.x - 10 and
+                    self.y < target.y + target.height + 10 and self.y + self.height > target.y - 10):
+                    self.shown = 0
 
-target = Target()
+targets = []
+for _ in range(10):
+    targets.append(Target())
 
 # Начальные настройки таймера
 total_time = 600  # 1 минута = 600 сантисекунд
@@ -99,24 +107,27 @@ while running:
     # Отрисовка фона
     screen.fill(black)
     
-    # Отрисовка цели
-    if target.shown == 1: screen.blit(target.img, (target.x, target.y))
-
-    target.delay -= 1
-    if target.delay <= 0:
-        target.randomize()
+    # Отрисовка целей
+    for target in targets:
+        if target.shown == 1: 
+            screen.blit(target.img, (target.x, target.y))
+        target.delay -= 1
+        if target.delay <= 0:
+            target.randomize()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if target.shown == 1:
-                if target.x < event.pos[0] < target.x + target.width and target.y < event.pos[1] < target.y + target.height:
-                    if target.index == 2:
-                        score += 10
-                    else:
-                        score -= 20
-                    target.randomize()
+            screen.blit(bullet_hole, (event.pos[0]-bullet_width//2, event.pos[1] - bullet_height//2))
+            for target in targets:
+                if target.shown == 1:
+                    if target.x < event.pos[0] < target.x + target.width and target.y < event.pos[1] < target.y + target.height:
+                        if target.index == 2:
+                            score += 10
+                        else:
+                            score -= 20
+                        target.randomize()
     
      # Текущее время
     ticks = pygame.time.get_ticks()
