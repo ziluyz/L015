@@ -1,7 +1,6 @@
 import pygame
 import random
 import pygame.locals as pl
-from sortedcontainers import SortedDict
 
 pygame.init()
 
@@ -113,10 +112,10 @@ for _ in range(10):
 
 # Начальные настройки таймера
 total_time = 600  # 1 минута = 600 сантисекунд
-start_ticks = pygame.time.get_ticks()  # стартовое время
 
 def main_game():
     score = 0
+    start_ticks = pygame.time.get_ticks()  # стартовое время
     global running
     while running:
         # Отрисовка фона
@@ -145,7 +144,7 @@ def main_game():
         s_seconds = (ticks - start_ticks) // 100  # количество прошедших сантисекунд
 
         if s_seconds > total_time:
-            return
+            return score
 
         # Расчет оставшегося времени
         remaining_s_seconds = total_time - s_seconds
@@ -178,6 +177,14 @@ def main_game():
         # Задержка для снижения загрузки процессора
         pygame.time.delay(100)
 
+def print_scores():
+    # Отрисовка таблицы рекордов
+    y = 150
+    for item in score_table:
+        text = small_font.render(f"{item[1]} - {item[0]}", True, white)
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+        y += 50
+
 def start_page():
     global running
     while running:
@@ -201,30 +208,74 @@ def start_page():
         text_start = big_font.render("START", True, color)
         screen.blit(text_start, (screen.get_width() // 2 - text_start.get_width() // 2, 20))
 
+        print_scores()
+
+        pygame.display.flip()
+        pygame.time.delay(100)
+
+def end_page(score):
+    global running
+    # Текстовая переменная
+    input_text = ''
+    base_prompt = 'Введите имя: '
+    text_surface = font.render(base_prompt + input_text, True, white)
+    input_name = score_table[0][0] < score
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif input_name and event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    score_table.pop(0)
+                    found = False
+                    for i in range(len(score_table)):
+                        if score < score_table[i][0]:
+                            found = True
+                            break
+                    if found: score_table.insert(i, (score, input_text))
+                    else: score_table.append((score, input_text))
+                    input_name = False
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text = input_text[:-1]
+                else:
+                    input_text += event.unicode
+                # Обновление текста
+                text_surface = font.render(base_prompt + input_text, True, white)
+            elif event.type == pygame.MOUSEBUTTONDOWN and not input_name:
+                return
+
+        screen.fill(black)
+        # Отображение текста
+        if input_name:
+            screen.blit(text_surface, (50, 150))
+
+        # Отрисовка текста "GAME OVER"
+        text = big_font.render("GAME OVER", True, red)
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 20))
+
         # Отрисовка таблицы рекордов
-        y = 150
-        for score, name in score_table.items():
-            text = small_font.render(f"{name} - {score}", True, white)
-            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
-            y += 50
+        if not input_name:
+            print_scores()
 
         pygame.display.flip()
         pygame.time.delay(100)
 
 # Начальная таблица рекордов
-score_table = SortedDict()
-score_table[10] = "Kurt Cobain"
-score_table[20] = "Michael Jackson"
-score_table[30] = "Jessie J"
-score_table[40] = "Elvis Presley"
-score_table[50] = "Bob Marley"
-score_table[60] = "Bob Dylan"
-score_table[70] = "Queen"
+score_table = []
+score_table.append((10, "Kurt Cobain"))
+score_table.append((20, "Michael Jackson"))
+score_table.append((30, "Jessie J"))
+score_table.append((40, "Elvis Presley"))
+score_table.append((50, "Bob Marley"))
+score_table.append((60, "Bob Dylan"))
+score_table.append((70, "Queen"))
 
 # Основной цикл приложения
 running = True
 while running:
     start_page()
-    main_game()
+    score = main_game()
+    end_page(score)
 
 pygame.quit()
