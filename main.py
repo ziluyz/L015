@@ -1,6 +1,7 @@
 import pygame
 import random
 import pygame.locals as pl
+from sortedcontainers import SortedDict
 
 pygame.init()
 
@@ -24,6 +25,8 @@ white = (255, 255, 255)
 
 # Шрифт и размер текста
 font = pygame.font.SysFont('Comic Sans MS', 32)
+big_font = pygame.font.SysFont('Comic Sans MS', 64)
+small_font = pygame.font.SysFont('Comic Sans MS', 24)
 
 # Параметры шкалы времени
 text_time = font.render(f"Time:", True, white)
@@ -142,7 +145,7 @@ def main_game():
         s_seconds = (ticks - start_ticks) // 100  # количество прошедших сантисекунд
 
         if s_seconds > total_time:
-            running = False
+            return
 
         # Расчет оставшегося времени
         remaining_s_seconds = total_time - s_seconds
@@ -175,9 +178,53 @@ def main_game():
         # Задержка для снижения загрузки процессора
         pygame.time.delay(100)
 
+def start_page():
+    global running
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if (screen.get_width() // 2 - text_start.get_width() // 2 <= event.pos[0] <= screen.get_width() // 2 + text_start.get_width() // 2 and
+                    20 <= event.pos[1] <= 20 + text_start.get_height()):
+                    return
+        # Отрисовка фона
+        screen.fill(black)
+
+        # Отрисовка кнопки "START"
+        phase = pygame.time.get_ticks() // 100 % 20
+        if phase < 10:
+            color = (255 * phase / 10, 255, 255 * (10 - phase) / 10)
+        else:
+            phase -= 10
+            color = (255 * (10 - phase) / 10, 255, 255 * phase / 10)
+        text_start = big_font.render("START", True, color)
+        screen.blit(text_start, (screen.get_width() // 2 - text_start.get_width() // 2, 20))
+
+        # Отрисовка таблицы рекордов
+        y = 150
+        for score, name in score_table.items():
+            text = small_font.render(f"{name} - {score}", True, white)
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+            y += 50
+
+        pygame.display.flip()
+        pygame.time.delay(100)
+
+# Начальная таблица рекордов
+score_table = SortedDict()
+score_table[10] = "Kurt Cobain"
+score_table[20] = "Michael Jackson"
+score_table[30] = "Jessie J"
+score_table[40] = "Elvis Presley"
+score_table[50] = "Bob Marley"
+score_table[60] = "Bob Dylan"
+score_table[70] = "Queen"
 
 # Основной цикл приложения
 running = True
-main_game()
+while running:
+    start_page()
+    main_game()
 
 pygame.quit()
